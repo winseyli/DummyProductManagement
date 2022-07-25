@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.android.dummyproductmanagement.Status
 import com.example.android.dummyproductmanagement.databinding.FragmentProductListBinding
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -21,20 +23,33 @@ class ProductListFragment : Fragment() {
     // from the fragment-ktx artifact
     private val viewModel: ProductListViewModel by activityViewModels()
 
+    private lateinit var adapter: ProductListAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        adapter = ProductListAdapter()
+
         // Inflate the layout for this fragment
-        _binding = FragmentProductListBinding.inflate(layoutInflater, container, false)
+        _binding = FragmentProductListBinding.inflate(layoutInflater, container, false).apply {
+            recyclerViewProducts.layoutManager = LinearLayoutManager(context)
+            recyclerViewProducts.adapter = adapter
+        }
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.resource.observe(this, Observer {
-            Log.d("viewmodel", it.data.toString())
+        viewModel.resource.observe(viewLifecycleOwner, Observer {
+            when (it.status) {
+                Status.SUCCESS -> {
+                    val products = it.data?.products
+                    adapter.setProducts(products ?: listOf())
+                    adapter.notifyDataSetChanged()
+                }
+            }
         })
     }
 
